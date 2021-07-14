@@ -44,6 +44,7 @@
     let crn_search = 'waiting...'
     const pending = document.getElementById('busy')
     const canvas = document.getElementById('canvas')
+    let last_raf = performance.now()
     document.getElementById('search').addEventListener('blur', async event => {
       const search = `${event.target.value ?? ''}`
       if (search === crn_search) return
@@ -73,8 +74,9 @@
             const p = document.createElement('p')
             p.innerText = name
             crn.appendChild(p)
-            if (Math.random() < 0.5) {
-              await new Promise(cb => requestAnimationFrame(() => requestAnimationFrame(cb)))
+            if (performance.now() - last_raf > 1000 / 60) {
+              await new Promise(requestAnimationFrame)
+              last_raf = performance.now()
             }
             pending.innerText = `waiting response...`
           }
