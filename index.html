@@ -60,7 +60,7 @@
             const name = path.pop()
             let crn = canvas
             for (const entry of path) {
-              let next = crn.querySelector(`details[data-entry='${encodeURIComponent(entry)}']`)
+              let next = crn.querySelector(`:scope>details[data-entry='${encodeURIComponent(entry)}']`)
               if (!next) {
                 next = document.createElement('details')
                 next.dataset.entry = entry
