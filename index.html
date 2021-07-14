@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <style>
+    details {
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      padding: 1em 1em 0;
+    }
+
+    summary {
+      font-weight: bold;
+      margin: -1em -1em 0;
+      padding: 1em;
+    }
+
+    details[open] {
+      padding: 1em;
+    }
+
+    details[open] summary {
+      border-bottom: 1px solid #aaa;
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <label>Search by: <input id="search" /></label><span id="busy"></span>
+  <br />
+  <div id="canvas"></div>
+  <script type="module">
+    const root = 'https://raw.githubusercontent.com/KhronosGroup/VK-GL-CTS/master/external/vulkancts/mustpass/master'
+    const targets = fetch(`${root}/vk-default.txt`)
+      .then(resp => resp.text())
+      .then(text => text.split('\n').filter(Boolean))
+      .then(targets => targets.map(target =>
+        fetch(`${root}/${target}`)
+          .then(content => content.text())
+          .then(content => content.split('\n').filter(Boolean))
+      ))
+    let crn_search = 'waiting...'
+    const pending = document.getElementById('busy')
+    const canvas = document.getElementById('canvas')
+    document.getElementById('search').addEventListener('blur', async event => {
+      const search = `${event.target.value ?? ''}`
+      if (search === crn_search) return
+      crn_search = search
+      const filter = new RegExp(search)
+      canvas.innerHTML = ''
+      pending.innerHTML = 'busy'
+      await targets.then(ts => Promise.all(ts.map(t => t.then(async list => {
+        for (const item of list) {
+          if (filter.test(item)) {
+            pending.innerText = `processing ${item}...`
+            const path = item.split('.')
+            const name = path.pop()
+            let crn = canvas
+            for (const entry of path) {
+              let next = crn.querySelector(`details[data-entry='${encodeURIComponent(entry)}']`)
+              if (!next) {
+                next = document.createElement('details')
+                next.dataset.entry = entry
+                const summary = document.createElement('summary')
+                summary.innerText = entry
+                next.appendChild(summary)
+                crn.appendChild(next)
+              }
+              crn = next
+            }
+            const p = document.createElement('p')
+            p.innerText = name
+            crn.appendChild(p)
+            if (Math.random() < 0.5) {
+              await new Promise(cb => requestAnimationFrame(() => requestAnimationFrame(cb)))
+            }
+            pending.innerText = `waiting response...`
+          }
+        }
+      }))))
+      pending.innerHTML = ''
+    })
+  </script>
+</body>
+
+</html>
